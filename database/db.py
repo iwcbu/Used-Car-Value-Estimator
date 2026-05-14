@@ -45,15 +45,20 @@ def drop_table(name):
 
 
 
-
 def main():
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT COUNT(*) FROM used_cars
+        SELECT *
+        FROM used_cars
+        WHERE price < 10000;
+        
     """)
-    print(cursor.fetchone())
+    cars = cursor.fetchmany(10)
+
+    for car in cars:
+        print(car)
 
     conn.close()
 

@@ -1,6 +1,7 @@
 import kagglehub
 import pandas as pd
 from pathlib import Path
+from database.db import get_connection, create_table
 
 
 def extract():
@@ -18,9 +19,13 @@ def extract():
 
 def inspect(df):
     print(df.head())
+    print()
     print(df.info())
+    print()
     print(df.isnull().sum())
+    print()
     print(df.describe(include="all"))
+    print()
 
 
 
@@ -72,6 +77,49 @@ def load(df):
     Path("data/processed").mkdir(parents=True, exist_ok=True)
     df.to_csv("data/processed/used_cars_cleaned.csv", index=False)
 
+    create_table("used_cars")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    for row in df.itertuples(index=False):
+        cursor.execute(
+            """
+                INSERT INTO used_cars (
+                    brand,
+                    model,
+                    year,
+                    mileage,
+                    fuel_type,
+                    engine,
+                    transmission,
+                    ext_col,
+                    int_col,
+                    accident,
+                    clean_title,
+                    price
+                ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+                """, (
+                    row.brand,
+                    row.model,
+                    row.year,
+                    row.mileage,
+                    row.fuel_type,
+                    row.engine,
+                    row.transmission,
+                    row.ext_col,
+                    row.int_col,
+                    row.accident,
+                    row.clean_title,
+                    row.price
+                )
+        )
+    
+    conn.commit()
+    conn.close()
+    
+
+
 
 
 def main():
@@ -82,7 +130,6 @@ def main():
     cleaned_df = transform(raw_df)
 
     load(cleaned_df)
-
 
 if __name__ == "__main__":
     main()
